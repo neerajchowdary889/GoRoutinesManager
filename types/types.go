@@ -3,7 +3,6 @@ package types
 import (
 	"context"
 	"sync"
-	CRWMutex "github.com/neerajchowdary889/GoRoutinesManager/ContextLock"
 )
 
 // Singleton pattern to not repeat the same managers again
@@ -13,7 +12,7 @@ var (
 
 // GlobalManager manages all app-level managers
 type GlobalManager struct {
-	GlobalMu    *CRWMutex.CRWMutex
+	GlobalMu    *sync.RWMutex
 	AppManagers map[string]*AppManager
 	Ctx         context.Context
 	Cancel      context.CancelFunc
@@ -22,7 +21,7 @@ type GlobalManager struct {
 
 // AppManager manages local-level managers for a specific app/module
 type AppManager struct {
-	AppMu         *CRWMutex.CRWMutex
+	AppMu         *sync.RWMutex
 	AppName       string
 	LocalManagers map[string]*LocalManager
 	Ctx           context.Context
@@ -33,7 +32,7 @@ type AppManager struct {
 
 // LocalManager manages goroutines for a specific file/module within an app
 type LocalManager struct {
-	LocalMu     *CRWMutex.CRWMutex
+	LocalMu     *sync.RWMutex
 	LocalName   string
 	Routines    map[string]*Routine
 	Ctx         context.Context

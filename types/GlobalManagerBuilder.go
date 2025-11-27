@@ -4,7 +4,6 @@ import (
 	"context"
 	"sync"
 
-	CRWMutex "github.com/neerajchowdary889/GoRoutinesManager/ContextLock"
 	"github.com/neerajchowdary889/GoRoutinesManager/types/Errors"
 )
 
@@ -17,11 +16,44 @@ func NewGlobalManager() *GlobalManager {
 	}
 }
 
-// Set APIs
+// Mutex Lock APIs
+// LockGlobalReadMutex locks the global read mutex for the global manager - This is used to read the global manager's data
+func (GM *GlobalManager) LockGlobalReadMutex() {
+	if GM.GlobalMu == nil {
+		GM.SetGlobalMutex()
+	}
+	GM.GlobalMu.RLock()
+}
 
+// UnlockGlobalReadMutex unlocks the global read mutex for the global manager - This is used to read the global manager's data
+func (GM *GlobalManager) UnlockGlobalReadMutex() {
+	if GM.GlobalMu == nil {
+		GM.SetGlobalMutex()
+	}
+	GM.GlobalMu.RUnlock()
+}
+
+// LockGlobalWriteMutex locks the global write mutex for the global manager - This is used to write the global manager's data
+func (GM *GlobalManager) LockGlobalWriteMutex() {
+	if GM.GlobalMu == nil {
+		GM.SetGlobalMutex()
+	}
+	GM.GlobalMu.Lock()
+}
+
+// UnlockGlobalWriteMutex unlocks the global write mutex for the global manager - This is used to write the global manager's data
+func (GM *GlobalManager) UnlockGlobalWriteMutex() {
+	if GM.GlobalMu == nil {
+		GM.SetGlobalMutex()
+	}
+	GM.GlobalMu.Unlock()
+}
+
+
+// Set APIs
 // SetGlobalMutex sets the global mutex for the global manager
 func (GM *GlobalManager) SetGlobalMutex() GlobalManager {
-	GM.GlobalMu = CRWMutex.NewCRWMutex()
+	GM.GlobalMu = &sync.RWMutex{}
 	return *GM
 }
 
@@ -65,8 +97,8 @@ func (GM *GlobalManager) GetGlobalMutex() *sync.RWMutex {
 }
 
 // GetGlobalContext gets the global context for the global manager
-func (GM *GlobalManager) GetGlobalContext() context.Context {
-	return GM.Ctx
+func (GM *GlobalManager) GetGlobalContext() (context.Context, context.CancelFunc) {
+	return GM.Ctx, GM.Cancel
 }
 
 // GetGlobalWaitGroup gets the global wait group for the global manager
@@ -98,36 +130,3 @@ func (GM *GlobalManager) GetAppManagerCount() int {
 	return len(GM.AppManagers)
 }
 
-// Mutex Lock APIs
-
-// LockGlobalReadMutex locks the global read mutex for the global manager - This is used to read the global manager's data
-func (GM *GlobalManager) LockGlobalReadMutex(ctx context.Context) {
-	if GM.GlobalMu == nil {
-		GM.SetGlobalMutex(&sync.RWMutex{})
-	}
-	CRWMutex.RLock(ctx)
-}
-
-// UnlockGlobalReadMutex unlocks the global read mutex for the global manager - This is used to read the global manager's data
-func (GM *GlobalManager) UnlockGlobalReadMutex() {
-	if GM.GlobalMu == nil {
-		GM.SetGlobalMutex(&sync.RWMutex{})
-	}
-	GM.GlobalMu.RUnlock()
-}
-
-// LockGlobalWriteMutex locks the global write mutex for the global manager - This is used to write the global manager's data
-func (GM *GlobalManager) LockGlobalWriteMutex() {
-	if GM.GlobalMu == nil {
-		GM.SetGlobalMutex(&sync.RWMutex{})
-	}
-	GM.GlobalMu.Lock()
-}
-
-// UnlockGlobalWriteMutex unlocks the global write mutex for the global manager - This is used to write the global manager's data
-func (GM *GlobalManager) UnlockGlobalWriteMutex() {
-	if GM.GlobalMu == nil {
-		GM.SetGlobalMutex(&sync.RWMutex{})
-	}
-	GM.GlobalMu.Unlock()
-}

@@ -3,6 +3,8 @@ package types
 import (
 	"context"
 	"sync"
+
+	"github.com/neerajchowdary889/GoRoutinesManager/types/Errors"
 )
 
 func NewAppManager(appName string) *AppManager {
@@ -20,11 +22,10 @@ func NewAppManager(appName string) *AppManager {
 }
 
 // Lock APIs
-
 // LockAppReadMutex locks the app read mutex for the app manager - This is used to read the app manager's data
 func (AM *AppManager) LockAppReadMutex() {
 	if AM.AppMu == nil {
-		AM.SetAppMutex(&sync.RWMutex{})
+		AM.SetAppMutex()
 	}
 	AM.AppMu.RLock()
 }
@@ -32,21 +33,38 @@ func (AM *AppManager) LockAppReadMutex() {
 // UnlockAppReadMutex unlocks the app read mutex for the app manager - This is used to read the app manager's data
 func (AM *AppManager) UnlockAppReadMutex() {
 	if AM.AppMu == nil {
-		AM.SetAppMutex(&sync.RWMutex{})
+		AM.SetAppMutex()
 	}
 	AM.AppMu.RUnlock()
 }
 
-// Set APIs
+// LockAppWriteMutex locks the app write mutex for the app manager - This is used to write the app manager's data
+func (AM *AppManager) LockAppWriteMutex() {
+	if AM.AppMu == nil {
+		AM.SetAppMutex()
+	}
+	AM.AppMu.Lock()
+}
 
+// UnlockAppWriteMutex unlocks the app write mutex for the app manager - This is used to write the app manager's data
+func (AM *AppManager) UnlockAppWriteMutex() {
+	if AM.AppMu == nil {
+		AM.SetAppMutex()
+	}
+	AM.AppMu.Unlock()
+}
+
+// Set APIs
 // SetAppName sets the name of the app for the app manager
 func (AM *AppManager) SetAppName(appName string) AppManager {
 	AM.AppName = appName
 	return *AM
 }
 
-func (AM *AppManager) SetAppMutex(mu *sync.RWMutex) AppManager {
-	AM.AppMu = mu
+func (AM *AppManager) SetAppMutex() AppManager {
+	if AM.AppMu == nil {
+		AM.AppMu = &sync.RWMutex{}
+	}
 	return *AM
 }
 
@@ -61,6 +79,11 @@ func (AM *AppManager) SetAppWaitGroup(wg *sync.WaitGroup) AppManager {
 	return *AM
 }
 
+func (AM *AppManager) SetAppParentContext() AppManager {
+	AM.ParentCtx, _ = NewGlobalManager().GetGlobalContext()
+	return *AM
+}
+
 // AddLocalManager adds a new local manager to the app manager
 func (AM *AppManager) AddLocalManager(localName string, local *LocalManager) AppManager {
 	if IsIntilized().Local(AM.AppName, localName) {
@@ -70,4 +93,58 @@ func (AM *AppManager) AddLocalManager(localName string, local *LocalManager) App
 	defer AM.UnlockAppWriteMutex()
 	AM.LocalManagers[localName] = local
 	return *AM
+}
+
+// RemoveLocalManager removes a local manager from the app manager
+func (AM *AppManager) RemoveLocalManager(localName string) AppManager {
+	AM.LockAppWriteMutex()
+	defer AM.UnlockAppWriteMutex()
+	delete(AM.LocalManagers, localName)
+	return *AM
+}
+
+// Get APIs
+// GetLocalManagers gets all the local managers for the app manager
+func (AM *AppManager) GetLocalManagers() map[string]*LocalManager {
+	AM.LockAppReadMutex()
+	defer AM.UnlockAppReadMutex()
+	return AM.LocalManagers
+}
+
+// GetLocalManager gets a specific local manager for the app manager
+func (AM *AppManager) GetLocalManager(localName string) (*LocalManager, error) {
+	AM.LockAppReadMutex()
+	defer AM.UnlockAppReadMutex()
+	if _, ok := AM.LocalManagers[localName]; !ok {
+		return nil, Errors.ErrLocalManagerNotFound
+	}
+	return AM.LocalManagers[localName], nil
+}
+
+// GetLocalManagerCount gets the number of local managers for the app manager
+func (AM *AppManager) GetLocalManagerCount() int {
+	AM.LockAppReadMutex()
+	defer AM.UnlockAppReadMutex()
+	return len(AM.LocalManagers)
+}
+
+// GetAppName gets the name of the app for the app manager
+func (AM *AppManager) GetAppName() string {
+	AM.LockAppReadMutex()
+	defer AM.UnlockAppReadMutex()
+	return AM.AppName
+}
+
+// GetAppContext gets the context for the app manager
+func (AM *AppManager) GetAppContext() (context.Context, context.CancelFunc) {
+	AM.LockAppReadMutex()
+	defer AM.UnlockAppReadMutex()
+	return AM.Ctx, AM.Cancel
+}
+
+// Get the Parent Context for the app manager
+func (AM *AppManager) GetParentContext() context.Context {
+	AM.LockAppReadMutex()
+	defer AM.UnlockAppReadMutex()
+	return AM.ParentCtx
 }
