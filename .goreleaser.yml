@@ -1,0 +1,46 @@
+project_name: GoRoutinesManager
+
+before:
+  hooks:
+    - go mod download
+    - go mod tidy
+
+builds:
+  - id: goroutinesmanager
+    main: .
+    binary: goroutinesmanager
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+release:
+  github:
+    owner: neerajchowdary889
+    name: GoRoutinesManager
+  draft: false
+  prerelease: auto
+

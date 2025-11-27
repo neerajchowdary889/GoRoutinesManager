@@ -1,0 +1,146 @@
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs:
+    - vendor
+  skip-files:
+    - ".*\\.pb\\.go$"
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - gofmt
+    - goimports
+    - misspell
+    - revive
+    - gosec
+    - unconvert
+    - unparam
+    - gocritic
+    - exportloopref
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocyclo
+    - goerr113
+    - gomnd
+    - goprintffuncname
+    - rowserrcheck
+    - sqlclosecheck
+    - thelper
+    - tparallel
+    - wrapcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - forbidigo
+    - gocritic
+    - godot
+    - godox
+    - goheader
+    - gofumpt
+    - gomoddirectives
+    - gomodguard
+    - lll
+    - maintidx
+    - makezero
+    - nilerr
+    - nilnil
+    - nlreturn
+    - noctx
+    - nolintlint
+    - nonamedreturns
+    - nosprintfhostport
+    - paralleltest
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - tenv
+    - testpackage
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gocyclo:
+    min-complexity: 15
+  goimports:
+    local-prefixes: github.com/neerajchowdary889/GoRoutinesManager
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+      - wrapperFunc
+  govet:
+    check-shadowing: true
+  lll:
+    line-length: 100
+  misspell:
+    locale: US
+  revive:
+    min-confidence: 0
+    rules:
+      - name: exported
+        severity: warning
+      - name: unexported-return
+        severity: warning
+      - name: error-return
+        severity: warning
+      - name: error-naming
+        severity: warning
+      - name: var-naming
+        severity: warning
+      - name: if-return
+        severity: warning
+      - name: increment-decrement
+        severity: warning
+      - name: var-declaration
+        severity: warning
+  gosec:
+    severity: medium
+    confidence: medium
+  godot:
+    scope: declarations
+    exclude:
+      - "^TODO:"
+      - "^FIXME:"
+      - "^XXX:"
+    capital: true
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+        - gocritic
+        - thelper
+        - tparallel
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
