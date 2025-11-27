@@ -9,7 +9,7 @@ import (
 	"github.com/neerajchowdary889/GoRoutinesManager/types"
 )
 
-type GlobalManager struct {}
+type GlobalManager struct{}
 
 func NewGlobalManager() Interface.GlobalGoroutineManagerInterface {
 	return &GlobalManager{}
@@ -34,11 +34,11 @@ func (g *GlobalManager) Init() error {
 	globalMutex := &sync.RWMutex{}
 
 	types.SetGlobalManager(&types.GlobalManager{
-		GlobalMu: globalMutex,
+		GlobalMu:    globalMutex,
 		AppManagers: make(map[string]*types.AppManager),
-		Ctx: ctx,
-		Cancel: Done,
-		Wg: wg,
+		Ctx:         ctx,
+		Cancel:      Done,
+		Wg:          wg,
 	})
 
 	return nil
@@ -52,7 +52,6 @@ func (g *GlobalManager) NewWaitGroup() (*sync.WaitGroup, error) {
 	wg := &sync.WaitGroup{}
 	return wg, nil
 }
-
 
 func (g *GlobalManager) GetAllAppManagers() ([]*types.AppManager, error) {
 	return nil, nil

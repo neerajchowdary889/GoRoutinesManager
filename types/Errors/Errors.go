@@ -6,4 +6,5 @@ var (
 	ErrGlobalManagerNotFound = fmt.Errorf("global manager not found")
 	ErrAppManagerNotFound    = fmt.Errorf("app manager not found")
 	ErrLocalManagerNotFound  = fmt.Errorf("local manager not found")
+	ErrLockContextCancelled  = fmt.Errorf("lock acquisition cancelled due to context cancellation")
 )

@@ -1,5 +1,7 @@
 package types
+
 import "github.com/neerajchowdary889/GoRoutinesManager/types/Errors"
+
 func SetGlobalManager(global *GlobalManager) {
 	if IsIntilized().Global() {
 		return
@@ -22,8 +24,8 @@ func SetLocalManager(appName, localName string, local *LocalManager) {
 }
 
 func GetGlobalManager() (*GlobalManager, error) {
-		if Global == nil {
-			return nil, Errors.ErrGlobalManagerNotFound
+	if Global == nil {
+		return nil, Errors.ErrGlobalManagerNotFound
 	}
 	return Global, nil
 }

@@ -41,7 +41,7 @@ type LocalManagerLister interface {
 }
 
 // AppManagerLister lists all app managers
-type      AppManagerLister interface {
+type AppManagerLister interface {
 	GetAllAppManagers() ([]*types.AppManager, error)
 	GetAppManagerCount() int
 }
@@ -85,7 +85,7 @@ type GlobalGoroutineManagerInterface interface {
 // AppGoroutineManagerInterface defines the complete interface for app manager
 type AppGoroutineManagerInterface interface {
 	Shutdowner
-	
+
 	AppManagerCreator
 
 	LocalManagerCreator
