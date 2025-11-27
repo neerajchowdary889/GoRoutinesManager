@@ -9,11 +9,14 @@ import (
 )
 
 // Initializer initializes the manager
-type LifeCycle interface {
+type Initializer interface {
 	Init() error
-	Shutdown(safe bool) error
 }
 
+// Shutdowner handles shutdown of the manager
+type Shutdowner interface {
+	Shutdown(safe bool) error
+}
 
 // GoroutineSpawner spawns and tracks goroutines
 type GoroutineSpawner interface {
@@ -29,33 +32,32 @@ type FunctionShutdowner interface {
 type GoroutineLister interface {
 	GetAllGoroutines() ([]*types.Routine, error)
 	GetGoroutineCount() int
-	GetFunctionCount(functionName string) int
 }
 
 // LocalManagerLister lists all local managers
 type LocalManagerLister interface {
-	GetAllLocalManagers() ([]*types.LocalGoroutineManager, error)
+	GetAllLocalManagers() ([]*types.LocalManager, error)
 	GetLocalManagerCount() int
 }
 
 // AppManagerLister lists all app managers
-type AppManagerLister interface {
-	GetAllAppManagers() ([]*types.AppGoroutineManager, error)
+type      AppManagerLister interface {
+	GetAllAppManagers() ([]*types.AppManager, error)
 	GetAppManagerCount() int
 }
 
 // AppManagerCreator creates new app managers
 type AppManagerCreator interface {
-	CreateApp(appName string) (*types.AppGoroutineManager, error)
+	CreateApp(appName string) (*types.AppManager, error)
 }
 
 // LocalManagerCreator creates new local managers
 type LocalManagerCreator interface {
-	CreateLocal(localName string) (*types.LocalGoroutineManager, error)
+	CreateLocal(localName string) (*types.LocalManager, error)
 }
 
 type WaitGroupCreator interface {
-	NewWaitGroup(ctx context.Context) (*sync.WaitGroup, error)
+	NewWaitGroup() (*sync.WaitGroup, error)
 }
 
 type FunctionWaitGroupCreator interface {
@@ -68,9 +70,9 @@ type FunctionWaitGroupCreator interface {
 
 // GlobalGoroutineManagerInterface defines the complete interface for global manager
 type GlobalGoroutineManagerInterface interface {
-	LifeCycle
+	Initializer
+	Shutdowner
 
-	AppManagerCreator
 	AppManagerLister
 
 	LocalManagerLister
@@ -82,7 +84,9 @@ type GlobalGoroutineManagerInterface interface {
 
 // AppGoroutineManagerInterface defines the complete interface for app manager
 type AppGoroutineManagerInterface interface {
-	LifeCycle
+	Shutdowner
+	
+	AppManagerCreator
 
 	LocalManagerCreator
 	LocalManagerLister
@@ -93,9 +97,8 @@ type AppGoroutineManagerInterface interface {
 
 // LocalGoroutineManagerInterface defines the complete interface for local manager
 type LocalGoroutineManagerInterface interface {
-	LifeCycle
 	FunctionShutdowner
-
+	Shutdowner
 	GoroutineSpawner
 	GoroutineLister
 

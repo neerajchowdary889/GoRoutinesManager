@@ -5,34 +5,39 @@ import (
 	"sync"
 )
 
-// GlobalGoroutineManager manages all app-level goroutine managers
-type GlobalGoroutineManager struct {
-	GlobalMu    sync.RWMutex
-	AppManagers map[string]*AppGoroutineManager
+// Singleton pattern to not repeat the same managers again
+var (
+	Global *GlobalManager
+)
+
+// GlobalManager manages all app-level managers
+type GlobalManager struct {
+	GlobalMu    *sync.RWMutex
+	AppManagers map[string]*AppManager
 	Ctx         context.Context
 	Cancel      context.CancelFunc
-	Wg          sync.WaitGroup
+	Wg          *sync.WaitGroup
 }
 
-// AppGoroutineManager manages local-level goroutine managers for a specific app/module
-type AppGoroutineManager struct {
-	LocalMu       sync.RWMutex
+// AppManager manages local-level managers for a specific app/module
+type AppManager struct {
+	AppMu       *sync.RWMutex
 	AppName       string
-	LocalManagers map[string]*LocalGoroutineManager
+	LocalManagers map[string]*LocalManager
 	Ctx           context.Context
 	Cancel        context.CancelFunc
-	Wg            sync.WaitGroup
+	Wg            *sync.WaitGroup
 	ParentCtx     context.Context
 }
 
-// LocalGoroutineManager manages goroutines for a specific file/module within an app
-type LocalGoroutineManager struct {
-	LocalMu     sync.RWMutex
+// LocalManager manages goroutines for a specific file/module within an app
+type LocalManager struct {
+	LocalMu     *sync.RWMutex
 	LocalName   string
 	Routines    map[string]*Routine
 	Ctx         context.Context
 	Cancel      context.CancelFunc
-	Wg          sync.WaitGroup
+	Wg          *sync.WaitGroup
 	FunctionWgs map[string]*sync.WaitGroup // Per function name for selective shutdown
 	ParentCtx   context.Context
 }
