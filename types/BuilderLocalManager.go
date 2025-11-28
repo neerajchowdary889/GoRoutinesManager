@@ -105,6 +105,12 @@ func (LM *LocalManager) SetParentContext() *LocalManager {
 	return LM
 }
 
+// SpawnChild sets the child context for the local manager
+func (LM *LocalManager) SpawnChild() (context.Context, context.CancelFunc) {
+	ctx, cancel := Context.SpawnChild(LM.Ctx)
+	return ctx, cancel
+}
+
 // AddRoutine adds a new routine to the local manager
 func (LM *LocalManager) AddRoutine(routine *Routine) *LocalManager {
 	// Lock first
@@ -173,6 +179,11 @@ func (LM *LocalManager) GetRoutines() map[string]*Routine {
 	LM.LockAppReadMutex()
 	defer LM.UnlockAppReadMutex()
 	return LM.Routines
+}
+
+// GetLocalContext gets the context for the local manager
+func (LM *LocalManager) GetLocalContext() (context.Context, context.CancelFunc) {
+	return LM.Ctx, LM.Cancel
 }
 
 // GetFunctionWg gets a specific function wait group for the local manager

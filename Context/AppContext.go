@@ -14,6 +14,7 @@ type AppContext struct {
 
 func GetAppContext(app string) ContextInterface {
 	// Get global context and ensure it's initialized
+	// If app context is in the map, then return the existing one
 	gc := GetGlobalContext()
 	gc.Init()
 
@@ -123,7 +124,7 @@ func (ac *AppContext) NewChildContext() (context.Context, context.CancelFunc) {
 }
 
 // Spawn Child for the given context
-func (ac *AppContext) SpawnChild(ctx context.Context) (context.Context, context.CancelFunc) {
+func SpawnChild(ctx context.Context) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithCancel(ctx)
 	return ctx, func() {
 		cancel()
@@ -131,7 +132,7 @@ func (ac *AppContext) SpawnChild(ctx context.Context) (context.Context, context.
 }
 
 // Spawn Child for the given context with timeout
-func (ac *AppContext) SpawnChildWithTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+func SpawnChildWithTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	return ctx, func() {
 		cancel()
