@@ -3,7 +3,7 @@ package Global
 import (
 	AppHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/App"
 	LocalHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/Local"
-	 "github.com/neerajchowdary889/GoRoutinesManager/Manager/App"
+	"github.com/neerajchowdary889/GoRoutinesManager/Manager/App"
 	"github.com/neerajchowdary889/GoRoutinesManager/Manager/Interface"
 	"github.com/neerajchowdary889/GoRoutinesManager/types"
 )
