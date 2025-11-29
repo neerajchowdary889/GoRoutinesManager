@@ -26,6 +26,7 @@ func newLocalManager(localName string, appName string) *LocalManager {
 		LocalName:   localName,
 		Routines:    make(map[string]*Routine),
 		FunctionWgs: make(map[string]*sync.WaitGroup), // Initialize FunctionWgs map
+		Wg:          &sync.WaitGroup{},                // Initialize wait group for safe shutdown
 	}
 
 	// Add the local manager to the app manager

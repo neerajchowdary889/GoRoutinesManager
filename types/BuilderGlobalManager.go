@@ -12,11 +12,13 @@ func NewGlobalManager() *GlobalManager {
 	if IsIntilized().Global() {
 		return Global
 	}
-	GlobalManger := &GlobalManager{
+
+	Global = &GlobalManager{
 		AppManagers: make(map[string]*AppManager),
+		Wg:          &sync.WaitGroup{}, // Initialize wait group for safe shutdown
 	}
 
-	return GlobalManger
+	return Global
 }
 
 // Mutex Lock APIs
@@ -125,7 +127,7 @@ func (GM *GlobalManager) GetAppManager(appName string) (*AppManager, error) {
 	defer GM.UnlockGlobalReadMutex()
 	return GM.AppManagers[appName], nil
 }
- 
+
 // GetAppManagerCount gets the number of app managers for the global manager
 func (GM *GlobalManager) GetAppManagerCount() int {
 	GM.LockGlobalReadMutex()

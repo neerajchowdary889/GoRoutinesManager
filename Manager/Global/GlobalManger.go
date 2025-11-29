@@ -1,8 +1,8 @@
 package Global
 
 import (
-	LocalHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/Local"
 	AppHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/App"
+	LocalHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/Local"
 	"github.com/neerajchowdary889/GoRoutinesManager/Manager/Interface"
 	"github.com/neerajchowdary889/GoRoutinesManager/types"
 )
@@ -25,7 +25,66 @@ func (GM *GlobalManager) Init() error {
 }
 
 func (GM *GlobalManager) Shutdown(safe bool) error {
-	// TODO: Implement logic to shutdown all app managers
+	globalMgr, err := types.GetGlobalManager()
+	if err != nil {
+		return err
+	}
+
+	// Get all app managers
+	appManagers, err := GM.GetAllAppManagers()
+	if err != nil {
+		return err
+	}
+
+	if safe {
+		// Safe shutdown: wait for all app managers to complete gracefully
+		// Use the GlobalManager's wait group
+		if globalMgr.Wg != nil {
+			// Add all app managers to the wait group
+			for _, appMgr := range appManagers {
+				globalMgr.Wg.Add(1)
+				go func(am *types.AppManager) {
+					defer globalMgr.Wg.Done()
+					// Safe shutdown: wait for app manager's wait group
+					if am.Wg != nil {
+						am.Wg.Wait()
+					}
+				}(appMgr)
+			}
+			// Wait for all app managers to shutdown
+			globalMgr.Wg.Wait()
+		}
+	} else {
+		// Unsafe shutdown: cancel all app manager contexts forcefully
+		for _, appMgr := range appManagers {
+			// Cancel all local manager contexts
+			for _, localMgr := range appMgr.GetLocalManagers() {
+				// Cancel all routine contexts
+				for _, routine := range localMgr.GetRoutines() {
+					cancel := routine.GetCancel()
+					if cancel != nil {
+						cancel()
+					}
+				}
+
+				// Cancel local manager context
+				if localMgr.Cancel != nil {
+					localMgr.Cancel()
+				}
+			}
+
+			// Cancel the app manager's context
+			if appMgr.Cancel != nil {
+				appMgr.Cancel()
+			}
+		}
+
+		// Cancel the global manager's context
+		if globalMgr.Cancel != nil {
+			globalMgr.Cancel()
+		}
+	}
+
 	return nil
 }
 
