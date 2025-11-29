@@ -1,4 +1,4 @@
-package Helper
+package App
 
 import "github.com/neerajchowdary889/GoRoutinesManager/types"
 

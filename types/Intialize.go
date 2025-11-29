@@ -1,22 +1,27 @@
 package types
 
-
 type Initializer struct{}
 
 func IsIntilized() Initializer {
 	return Initializer{}
 }
 
-func(Is Initializer) Global() bool {
+func (Is Initializer) Global() bool {
 	return Global != nil
 }
 
 // Check if the app manager is alread intilized in the global manager
-func(Is Initializer) App(appName string) bool {
+func (Is Initializer) App(appName string) bool {
+	if Global == nil {
+		return false
+	}
 	return Global.AppManagers[appName] != nil
 }
 
-func(Is Initializer) Local(appName, localName string) bool {
+func (Is Initializer) Local(appName, localName string) bool {
+	if Global == nil {
+		return false
+	}
 	appMgr, ok := Global.AppManagers[appName]
 	if !ok || appMgr == nil {
 		return false
@@ -24,7 +29,10 @@ func(Is Initializer) Local(appName, localName string) bool {
 	return appMgr.LocalManagers[localName] != nil
 }
 
-func(Is Initializer) Routine(appName, localName, routineID string) bool {
+func (Is Initializer) Routine(appName, localName, routineID string) bool {
+	if Global == nil {
+		return false
+	}
 	appMgr, ok := Global.AppManagers[appName]
 	if !ok || appMgr == nil {
 		return false

@@ -1,7 +1,8 @@
 package Global
 
 import (
-	"github.com/neerajchowdary889/GoRoutinesManager/Helper"
+	LocalHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/Local"
+	AppHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/App"
 	"github.com/neerajchowdary889/GoRoutinesManager/Manager/Interface"
 	"github.com/neerajchowdary889/GoRoutinesManager/types"
 )
@@ -35,7 +36,7 @@ func (GM *GlobalManager) GetAllAppManagers() ([]*types.AppManager, error) {
 	}
 
 	mapValue := Global.GetAppManagers()
-	helper := Helper.NewAppHelper()
+	helper := AppHelper.NewAppHelper()
 	return helper.MapToSlice(mapValue), nil
 }
 
@@ -58,7 +59,7 @@ func (GM *GlobalManager) GetAllLocalManagers() ([]*types.LocalManager, error) {
 	var localManagers []*types.LocalManager
 	for _, appManager := range appManagers {
 		// Convert map to slice
-		LocalManagerSlice := Helper.NewLocalHelper().MapToSlice(appManager.LocalManagers)
+		LocalManagerSlice := LocalHelper.NewLocalHelper().MapToSlice(appManager.LocalManagers)
 		localManagers = append(localManagers, LocalManagerSlice...)
 	}
 
@@ -93,7 +94,7 @@ func (GM *GlobalManager) GetAllGoroutines() ([]*types.Routine, error) {
 		LocalManagers := appManager.GetLocalManagers()
 		for _, localManager := range LocalManagers {
 			Routines := localManager.GetRoutines()
-			goroutines = append(goroutines, Helper.NewLocalHelper().RoutinesMapToSlice(Routines)...)
+			goroutines = append(goroutines, LocalHelper.NewLocalHelper().RoutinesMapToSlice(Routines)...)
 		}
 	}
 	return goroutines, nil

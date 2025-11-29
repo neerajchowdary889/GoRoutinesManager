@@ -1,4 +1,4 @@
-package Helper
+package Local
 
 import "github.com/neerajchowdary889/GoRoutinesManager/types"
 

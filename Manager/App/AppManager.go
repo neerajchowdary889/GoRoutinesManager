@@ -1,7 +1,7 @@
 package App
 
 import (
-	"github.com/neerajchowdary889/GoRoutinesManager/Helper"
+	LocalHelper "github.com/neerajchowdary889/GoRoutinesManager/Helper/Local"
 	"github.com/neerajchowdary889/GoRoutinesManager/Manager/Global"
 	"github.com/neerajchowdary889/GoRoutinesManager/Manager/Interface"
 	"github.com/neerajchowdary889/GoRoutinesManager/types"
@@ -63,7 +63,7 @@ func (AM *AppManager) GetAllLocalManagers() ([]*types.LocalManager, error) {
 	if err != nil {
 		return nil, err
 	}
-	return Helper.NewLocalHelper().MapToSlice(appManager.GetLocalManagers()), nil
+	return LocalHelper.NewLocalHelper().MapToSlice(appManager.GetLocalManagers()), nil
 }
 
 func (AM *AppManager) GetLocalManager(localName string) (*types.LocalManager, error) {
@@ -84,7 +84,7 @@ func (AM *AppManager) GetAllGoroutines() ([]*types.Routine, error) {
 	LocalManagers := appManager.GetLocalManagers()
 	allGoroutines := make([]*types.Routine, 0)
 	for _, localManager := range LocalManagers {
-		goroutines := Helper.NewLocalHelper().RoutinesMapToSlice(localManager.GetRoutines())
+		goroutines := LocalHelper.NewLocalHelper().RoutinesMapToSlice(localManager.GetRoutines())
 		allGoroutines = append(allGoroutines, goroutines...)
 	}
 	return allGoroutines, nil
