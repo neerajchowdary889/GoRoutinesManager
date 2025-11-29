@@ -21,6 +21,7 @@ type Shutdowner interface {
 // GoroutineSpawner spawns and tracks goroutines
 type GoroutineSpawner interface {
 	Go(functionName string, workerFunc func(ctx context.Context) error) error
+	GoWithWaitGroup(functionName string, workerFunc func(ctx context.Context) error) error
 }
 
 // FunctionShutdowner handles shutdown of specific functions
@@ -56,9 +57,27 @@ type LocalManagerCreator interface {
 	CreateLocal(localName string) (*types.LocalManager, error)
 }
 
-
 type FunctionWaitGroupCreator interface {
 	NewFunctionWaitGroup(ctx context.Context, functionName string) (*sync.WaitGroup, error)
+}
+
+// FunctionWaitGroupManager manages function-level wait groups
+type FunctionWaitGroupManager interface {
+	WaitForFunction(functionName string) error
+	WaitForFunctionWithTimeout(functionName string, timeout time.Duration) bool
+	GetFunctionGoroutineCount(functionName string) int
+}
+
+// RoutineManager defines methods for managing individual routines
+type RoutineManager interface {
+	CancelRoutine(routineID string) error
+	WaitForRoutine(routineID string, timeout time.Duration) bool
+	IsRoutineDone(routineID string) bool
+	GetRoutineContext(routineID string) context.Context
+	GetRoutineStartedAt(routineID string) int64
+	GetRoutineUptime(routineID string) time.Duration
+	IsRoutineContextCancelled(routineID string) bool
+	GetRoutine(routineID string) (*types.Routine, error)
 }
 
 // ----------------------
@@ -90,13 +109,15 @@ type AppGoroutineManagerInterface interface {
 
 // LocalGoroutineManagerInterface defines the complete interface for local manager
 type LocalGoroutineManagerInterface interface {
+	Shutdowner
+	FunctionShutdowner
+
 	LocalManagerCreator
 
-	FunctionShutdowner
-	Shutdowner
-
 	GoroutineSpawner
+
 	GoroutineLister
 
 	FunctionWaitGroupCreator
+	FunctionWaitGroupManager
 }
