@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+// Default Values
+var (
+	// Default timeout is 10 seconds - can be changed using Metadata
+	ShutdownTimeout = 10 * time.Second
+)
+
 // Singleton pattern to not repeat the same managers again
 var (
 	Global *GlobalManager
@@ -18,6 +24,7 @@ type GlobalManager struct {
 	Ctx         context.Context
 	Cancel      context.CancelFunc
 	Wg          *sync.WaitGroup 
+	Metadata    *Metadata
 }
 
 // AppManager manages local-level managers for a specific app/module
@@ -55,5 +62,7 @@ type Routine struct {
 
 type Metadata struct{
 	MaxRoutines int
+	Metrics bool
+	MetricsURL string
 	ShutdownTimeout time.Duration
 }

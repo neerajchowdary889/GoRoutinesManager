@@ -169,3 +169,12 @@ func (GM *GlobalManager) GetGoroutineCount() int {
 	}
 	return i
 }
+
+
+func (GM *GlobalManager) UpdateMetadata(flag string, value interface{}) (*types.Metadata, error) {
+	return GM.UpdateGlobalMetadata(flag, value)
+}
+
+func (GM *GlobalManager) GetMetadata() (*types.Metadata, error) {
+	return GM.GetGlobalMetadata()
+}

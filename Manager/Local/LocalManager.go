@@ -70,7 +70,7 @@ func (LM *LocalManagerStruct) Shutdown(safe bool) error {
 		}
 
 		// Step 2: Try to shutdown each function gracefully with timeout
-		shutdownTimeout := 10 * time.Second
+		shutdownTimeout := types.ShutdownTimeout
 		for functionName := range functionNames {
 			// Try graceful shutdown with timeout
 			LM.ShutdownFunction(functionName, shutdownTimeout)

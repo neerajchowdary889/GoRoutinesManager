@@ -76,6 +76,17 @@ func (GM *GlobalManager) SetGlobalWaitGroup() *GlobalManager {
 	return GM
 }
 
+// SetMetadata sets the metadata for the global manager
+func (GM *GlobalManager) SetMetadata(metadata *Metadata) *GlobalManager {
+	GM.Metadata = metadata
+	return GM
+}
+
+// GetMetadata gets the metadata for the global manager
+func (GM *GlobalManager) GetMetadata() *Metadata {
+	return GM.Metadata
+}
+
 // AddAppManager adds a new app manager to the global manager
 func (GM *GlobalManager) AddAppManager(appName string, app *AppManager) *GlobalManager {
 	if IsIntilized().App(appName) {

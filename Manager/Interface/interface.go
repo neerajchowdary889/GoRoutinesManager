@@ -18,6 +18,13 @@ type Shutdowner interface {
 	Shutdown(safe bool) error
 }
 
+// MetadataManager handles metadata of the Global manager
+type MetadataManager interface {
+	// NewMetadata() *types.Metadata
+	GetMetadata() (*types.Metadata, error)
+	UpdateMetadata(flag string, value interface{}) (*types.Metadata, error)
+}
+
 // GoroutineSpawner spawns and tracks goroutines
 type GoroutineSpawner interface {
 	Go(functionName string, workerFunc func(ctx context.Context) error) error
@@ -88,6 +95,8 @@ type RoutineManager interface {
 type GlobalGoroutineManagerInterface interface {
 	Initializer
 	Shutdowner
+
+	MetadataManager
 
 	AppManagerLister
 
