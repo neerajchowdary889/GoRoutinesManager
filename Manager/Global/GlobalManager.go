@@ -82,9 +82,9 @@ func (GM *GlobalManager) Shutdown(safe bool) error {
 }
 
 func (GM *GlobalManager) GetAllAppManagers() ([]*types.AppManager, error) {
-	Global, error := types.GetGlobalManager()
-	if error != nil {
-		return nil, error
+	Global, err := types.GetGlobalManager()
+	if err != nil {
+		return nil, err
 	}
 
 	mapValue := Global.GetAppManagers()
@@ -93,8 +93,8 @@ func (GM *GlobalManager) GetAllAppManagers() ([]*types.AppManager, error) {
 }
 
 func (GM *GlobalManager) GetAppManagerCount() int {
-	Global, error := types.GetGlobalManager()
-	if error != nil {
+	Global, err := types.GetGlobalManager()
+	if err != nil {
 		return 0
 	}
 	return Global.GetAppManagerCount()
@@ -102,9 +102,9 @@ func (GM *GlobalManager) GetAppManagerCount() int {
 
 func (GM *GlobalManager) GetAllLocalManagers() ([]*types.LocalManager, error) {
 	// Get all app managers first
-	appManagers, error := GM.GetAllAppManagers()
-	if error != nil {
-		return nil, error
+	appManagers, err := GM.GetAllAppManagers()
+	if err != nil {
+		return nil, err
 	}
 
 	// Get all local managers from each app manager
@@ -122,8 +122,8 @@ func (GM *GlobalManager) GetLocalManagerCount() int {
 	// get all the local managers first
 	// Dont use GetAllLocalManagers() as it will create a new slice - memory usage would be O(n)
 	// and it will be a performance issue
-	App, error := GM.GetAllAppManagers()
-	if error != nil {
+	App, err := GM.GetAllAppManagers()
+	if err != nil {
 		return 0
 	}
 	i := 0
@@ -135,9 +135,9 @@ func (GM *GlobalManager) GetLocalManagerCount() int {
 
 func (GM *GlobalManager) GetAllGoroutines() ([]*types.Routine, error) {
 	// Get all app managers first
-	appManagers, error := GM.GetAllAppManagers()
-	if error != nil {
-		return nil, error
+	appManagers, err := GM.GetAllAppManagers()
+	if err != nil {
+		return nil, err
 	}
 
 	// Get all goroutines from each app manager - would run on O(n*m)
@@ -156,8 +156,8 @@ func (GM *GlobalManager) GetGoroutineCount() int {
 	// get all the goroutines first
 	// Dont use GetAllGoroutines() as it will create a new slice - memory usage would be O(n)
 	// and it will be a performance issue
-	App, error := GM.GetAllAppManagers()
-	if error != nil {
+	App, err := GM.GetAllAppManagers()
+	if err != nil {
 		return 0
 	}
 	i := 0
