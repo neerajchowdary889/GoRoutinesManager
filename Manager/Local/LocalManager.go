@@ -270,21 +270,33 @@ func (LM *LocalManagerStruct) ShutdownFunction(functionName string, timeout time
 // Go spawns a new goroutine, tracks it in the LocalManager, and returns the routine ID.
 // The goroutine is spawned with a context derived from the LocalManager's parent context.
 // The done channel is closed when the goroutine completes.
-func (LM *LocalManagerStruct) Go(functionName string, workerFunc func(ctx context.Context) error) error {
-	return LM.spawnGoroutine(functionName, workerFunc, false)
-}
-
-// GoWithWaitGroup spawns a goroutine and automatically manages the function wait group.
-// This is a convenience method that calls wg.Add(1) before spawning and wg.Done() after completion.
-// Use this when you want automatic wait group management.
-// For manual control, use Go() and manage the wait group yourself via NewFunctionWaitGroup().
-func (LM *LocalManagerStruct) GoWithWaitGroup(functionName string, workerFunc func(ctx context.Context) error) error {
-	return LM.spawnGoroutine(functionName, workerFunc, true)
+//
+// Options can be provided to configure the goroutine:
+//   - WithTimeout(duration): Sets a timeout for the goroutine. Context is cancelled on timeout.
+//   - WithPanicRecovery(enabled): Enables panic recovery. Panics are logged and goroutine completes normally.
+//   - AddToWaitGroup(functionName): Adds the goroutine to a function wait group for coordinated shutdown.
+//
+// Example:
+//
+//	localMgr.Go("worker", func(ctx context.Context) error { ... },
+//	    WithTimeout(5*time.Second),
+//	    WithPanicRecovery(true),
+//	    AddToWaitGroup("worker"))
+func (LM *LocalManagerStruct) Go(functionName string, workerFunc func(ctx context.Context) error, opts ...Interface.GoroutineOption) error {
+	// Apply default options
+	options := defaultGoroutineOptions()
+	for _, opt := range opts {
+		// Type assert to Option (defined in this package)
+		if localOpt, ok := opt.(Option); ok {
+			localOpt(options)
+		}
+	}
+	return LM.spawnGoroutine(functionName, workerFunc, options)
 }
 
 // spawnGoroutine is the internal implementation for spawning goroutines.
-// If useWaitGroup is true, it automatically manages Add/Done for the function wait group.
-func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc func(ctx context.Context) error, useWaitGroup bool) error {
+// It accepts options to configure timeout, panic recovery, and wait group behavior.
+func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc func(ctx context.Context) error, opts *goroutineOptions) error {
 	// Get the types.LocalManager instance
 	localManager, err := types.GetLocalManager(LM.AppName, LM.LocalName)
 	if err != nil {
@@ -292,9 +304,9 @@ func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc fun
 	}
 
 	var wg *sync.WaitGroup
-	if useWaitGroup {
-		// Get or create function wait group
-		wg, err = LM.NewFunctionWaitGroup(context.Background(), functionName)
+	if opts.waitGroupName != "" {
+		// Get or create function wait group using the specified function name
+		wg, err = LM.NewFunctionWaitGroup(context.Background(), opts.waitGroupName)
 		if err != nil {
 			return err
 		}
@@ -309,6 +321,20 @@ func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc fun
 
 	// Create a child context with cancel for this routine
 	routineCtx, cancel := localManager.SpawnChild()
+
+	// Apply timeout if specified
+	var timeoutCancel context.CancelFunc
+	if opts.timeout != nil {
+		routineCtx, timeoutCancel = context.WithTimeout(routineCtx, *opts.timeout)
+		// Combine cancellations: when timeout expires or explicit cancel is called
+		originalCancel := cancel
+		cancel = func() {
+			originalCancel()
+			if timeoutCancel != nil {
+				timeoutCancel()
+			}
+		}
+	}
 
 	// Create the done channel (bidirectional, buffered size 1)
 	// This allows non-blocking close even if nothing is reading
@@ -331,11 +357,20 @@ func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc fun
 	go func() {
 		startTimeNano := time.Now().UnixNano()
 		defer func() {
+			// Handle panic recovery if enabled
+			if opts.panicRecovery {
+				if r := recover(); r != nil {
+					// Log panic details
+					metrics.RecordOperationError("goroutine", "panic", fmt.Sprintf("function: %s, panic: %v", functionName, r))
+					// Panic is recovered, continue with normal cleanup
+				}
+			}
+
 			// Record goroutine completion
 			metrics.RecordGoroutineCompletion(LM.AppName, LM.LocalName, functionName, startTimeNano)
 			metrics.RecordGoroutineOperation("complete", LM.AppName, LM.LocalName, functionName)
 
-			if useWaitGroup && wg != nil {
+			if opts.waitGroupName != "" && wg != nil {
 				// Decrement function wait group when routine completes
 				wg.Done()
 			}
@@ -363,6 +398,7 @@ func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc fun
 		}()
 
 		// Execute the worker function with the routine's context
+		// If panic recovery is enabled, panics will be caught in defer above
 		_ = workerFunc(routineCtx)
 	}()
 

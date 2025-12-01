@@ -8,6 +8,11 @@ import (
 	"github.com/neerajchowdary889/GoRoutinesManager/types"
 )
 
+// GoroutineOption is a function that configures goroutine options.
+// Implementations should define their own option types that satisfy this interface.
+// The Local package provides WithTimeout and WithPanicRecovery functions.
+type GoroutineOption interface{}
+
 // Initializer initializes the manager
 type Initializer interface {
 	Init() error
@@ -27,8 +32,10 @@ type MetadataManager interface {
 
 // GoroutineSpawner spawns and tracks goroutines
 type GoroutineSpawner interface {
-	Go(functionName string, workerFunc func(ctx context.Context) error) error
-	GoWithWaitGroup(functionName string, workerFunc func(ctx context.Context) error) error
+	// Go spawns a goroutine with optional configuration.
+	// Options can be provided for timeout, panic recovery, and wait group management.
+	// The Local package provides WithTimeout, WithPanicRecovery, and AddToWaitGroup option functions.
+	Go(functionName string, workerFunc func(ctx context.Context) error, opts ...GoroutineOption) error
 }
 
 // FunctionShutdowner handles shutdown of specific functions

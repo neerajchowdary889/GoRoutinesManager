@@ -179,7 +179,7 @@ func TestComplexSystemWithMetrics(t *testing.T) {
 
 		// Spawn 10 worker goroutines
 		for i := 0; i < 10; i++ {
-			localMgr.GoWithWaitGroup("worker", func(ctx context.Context) error {
+			localMgr.Go("worker", func(ctx context.Context) error {
 				// Run for 30 seconds or until context is cancelled
 				deadline := time.Now().Add(30 * time.Second)
 				for {
@@ -196,10 +196,10 @@ func TestComplexSystemWithMetrics(t *testing.T) {
 						// Simulate work
 					}
 				}
-			})
+			}, Local.WithTimeout(30*time.Second), Local.AddToWaitGroup("worker"))
 
 			// Spawn 10 processor goroutines
-			localMgr.GoWithWaitGroup("processor", func(ctx context.Context) error {
+			localMgr.Go("processor", func(ctx context.Context) error {
 				// Run for 30 seconds or until context is cancelled
 				deadline := time.Now().Add(30 * time.Second)
 				for {
@@ -216,7 +216,7 @@ func TestComplexSystemWithMetrics(t *testing.T) {
 						// Simulate work
 					}
 				}
-			})
+			}, Local.WithTimeout(30*time.Second), Local.AddToWaitGroup("processor"))
 		}
 	}
 
