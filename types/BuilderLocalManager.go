@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/neerajchowdary889/GoRoutinesManager/Context"
 	"github.com/neerajchowdary889/GoRoutinesManager/types/Errors"
@@ -122,7 +123,7 @@ func (LM *LocalManager) SpawnChild() (context.Context, context.CancelFunc) {
 	// Lock and update
 	LM.LockAppWriteMutex()
 	defer LM.UnlockAppWriteMutex()
-	
+
 	ctx, cancel := Context.SpawnChild(LM.Ctx)
 	return ctx, cancel
 }
@@ -134,6 +135,8 @@ func (LM *LocalManager) AddRoutine(routine *Routine) *LocalManager {
 	defer LM.UnlockAppWriteMutex()
 
 	LM.Routines[routine.ID] = routine
+	// Atomically increment routine count for lock-free reads
+	atomic.AddInt64(&LM.routineCount, 1)
 	return LM
 }
 
@@ -152,7 +155,11 @@ func (LM *LocalManager) RemoveRoutine(routine *Routine, safe bool) *LocalManager
 	// TODO: safe or unsafe terminate is based on the flag
 
 	// Remove from the map
-	delete(LM.Routines, routine.ID)
+	if _, exists := LM.Routines[routine.ID]; exists {
+		delete(LM.Routines, routine.ID)
+		// Atomically decrement routine count for lock-free reads
+		atomic.AddInt64(&LM.routineCount, -1)
+	}
 	return LM
 }
 
@@ -213,10 +220,24 @@ func (LM *LocalManager) GetFunctionWg(functionName string) (*sync.WaitGroup, err
 }
 
 // GetRoutineCount gets the number of routines for the local manager
+// Uses atomic read for lock-free performance on high-frequency calls
+// Falls back to mutex-protected len() if atomic value is inconsistent (shouldn't happen)
 func (LM *LocalManager) GetRoutineCount() int {
-	LM.LockAppReadMutex()
-	defer LM.UnlockAppReadMutex()
-	return len(LM.Routines)
+	// Lock-free read using atomic counter
+	count := int(atomic.LoadInt64(&LM.routineCount))
+
+	// Sanity check: if count is negative, something went wrong - use mutex path
+	// This should never happen in normal operation, but provides safety
+	if count < 0 {
+		LM.LockAppReadMutex()
+		defer LM.UnlockAppReadMutex()
+		// Reset atomic counter to actual value
+		actualCount := len(LM.Routines)
+		atomic.StoreInt64(&LM.routineCount, int64(actualCount))
+		return actualCount
+	}
+
+	return count
 }
 
 // GetFunctionWgCount gets the number of function wait groups for the local manager

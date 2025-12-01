@@ -82,8 +82,12 @@ func (GM *GlobalManager) Shutdown(safe bool) error {
 					_ = amInstance.Shutdown(true)
 
 					// Wait for app manager's wait group (redundant but safe)
-					if am.Wg != nil {
-						am.Wg.Wait()
+					// Lock to safely read Wg pointer to avoid race condition
+					am.LockAppReadMutex()
+					wg := am.Wg
+					am.UnlockAppReadMutex()
+					if wg != nil {
+						wg.Wait()
 					}
 				}(appMgr)
 			}

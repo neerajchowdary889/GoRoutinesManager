@@ -25,7 +25,7 @@ type GlobalManager struct {
 	AppManagers map[string]*AppManager
 	Ctx         context.Context
 	Cancel      context.CancelFunc
-	Wg          *sync.WaitGroup 
+	Wg          *sync.WaitGroup
 	Metadata    *Metadata
 }
 
@@ -50,6 +50,9 @@ type LocalManager struct {
 	Wg          *sync.WaitGroup
 	FunctionWgs map[string]*sync.WaitGroup // Per function name for selective shutdown
 	ParentCtx   context.Context
+	// Atomic counter for lock-free reads of routine count
+	// Updated atomically when routines are added/removed
+	routineCount int64 // Use sync/atomic for operations
 }
 
 // Routine represents a tracked goroutine
@@ -62,10 +65,10 @@ type Routine struct {
 	StartedAt    int64 // Unix timestamp or monotonic time
 }
 
-type Metadata struct{
-	MaxRoutines int
-	Metrics bool
-	MetricsURL string
-	UpdateInterval time.Duration
+type Metadata struct {
+	MaxRoutines     int
+	Metrics         bool
+	MetricsURL      string
+	UpdateInterval  time.Duration
 	ShutdownTimeout time.Duration
 }

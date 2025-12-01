@@ -133,6 +133,8 @@ func (LM *LocalManagerStruct) Shutdown(safe bool) error {
 				if cancel != nil {
 					cancel()
 				}
+				// Remove routine from map to prevent memory leak
+				localManager.RemoveRoutine(routine, false)
 			}
 		}
 
@@ -149,12 +151,14 @@ func (LM *LocalManagerStruct) Shutdown(safe bool) error {
 			return err
 		}
 
-		// Cancel all routine contexts
+		// Cancel all routine contexts and remove from map
 		for _, routine := range routines {
 			cancel := routine.GetCancel()
 			if cancel != nil {
 				cancel()
 			}
+			// Remove routine from map to prevent memory leak
+			localManager.RemoveRoutine(routine, false)
 		}
 
 		// Cancel the local manager's context
@@ -292,6 +296,20 @@ func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc fun
 			// Close the done channel when routine completes
 			// The done channel is buffered (size 1) so this won't block
 			close(doneChan)
+
+			// Explicitly cancel the routine's context to ensure proper cleanup
+			// This ensures any resources tied to the context are released immediately
+			// Context inheritance handles parent cancellation, but explicit cleanup is better
+			if cancel != nil {
+				cancel()
+			}
+
+			// CRITICAL: Remove routine from tracking map to prevent memory leak
+			// This must be done after all cleanup to ensure the routine is fully completed
+			// Using safe=false since the routine is already completing naturally
+			// Note: RemoveRoutine also cancels the context, but we've already done it above
+			// for explicit cleanup. RemoveRoutine's cancel is idempotent (safe to call twice).
+			localManager.RemoveRoutine(routine, false)
 		}()
 
 		// Execute the worker function with the routine's context
