@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/neerajchowdary889/GoRoutinesManager/Context"
-	"github.com/neerajchowdary889/GoRoutinesManager/types/Errors"
+	"github.com/neerajchowdary889/GoRoutinesManager/Manager/Errors"
 )
 
 func NewGlobalManager() *GlobalManager {
@@ -66,6 +66,9 @@ func (GM *GlobalManager) SetGlobalMutex() *GlobalManager {
 
 // SetGlobalContext sets the global context and cancel function for the global manager
 func (GM *GlobalManager) SetGlobalContext() *GlobalManager {
+	// Lock and update
+	GM.LockGlobalWriteMutex()
+	defer GM.UnlockGlobalWriteMutex()
 	GM.Ctx = Context.GetGlobalContext().Get()
 	GM.Cancel = func() {
 		Context.GetGlobalContext().Done(GM.Ctx)
@@ -75,12 +78,18 @@ func (GM *GlobalManager) SetGlobalContext() *GlobalManager {
 
 // SetGlobalWaitGroup sets the global wait group for the global manager - This is used to concurrently wait for all app managers to shutdown
 func (GM *GlobalManager) SetGlobalWaitGroup() *GlobalManager {
+	// Lock and update
+	GM.LockGlobalWriteMutex()
+	defer GM.UnlockGlobalWriteMutex()
 	GM.Wg = &sync.WaitGroup{}
 	return GM
 }
 
 // SetMetadata sets the metadata for the global manager
 func (GM *GlobalManager) SetMetadata(metadata *Metadata) *GlobalManager {
+	// Lock and update
+	GM.LockGlobalWriteMutex()
+	defer GM.UnlockGlobalWriteMutex()
 	GM.Metadata = metadata
 	return GM
 }
@@ -112,16 +121,25 @@ func (GM *GlobalManager) RemoveAppManager(appName string) *GlobalManager {
 // >>> Get APIs
 // GetGlobalMutex gets the global mutex for the global manager
 func (GM *GlobalManager) GetGlobalMutex() *sync.RWMutex {
+	// Lock and update
+	GM.LockGlobalReadMutex()
+	defer GM.UnlockGlobalReadMutex()
 	return GM.GlobalMu
 }
 
 // GetGlobalContext gets the global context for the global manager
 func (GM *GlobalManager) GetGlobalContext() (context.Context, context.CancelFunc) {
+	// Lock and update
+	GM.LockGlobalReadMutex()
+	defer GM.UnlockGlobalReadMutex()
 	return GM.Ctx, GM.Cancel
 }
 
 // GetGlobalWaitGroup gets the global wait group for the global manager
 func (GM *GlobalManager) GetGlobalWaitGroup() *sync.WaitGroup {
+	// Lock and update
+	GM.LockGlobalReadMutex()
+	defer GM.UnlockGlobalReadMutex()
 	return GM.Wg
 }
 
