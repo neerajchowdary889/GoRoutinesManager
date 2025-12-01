@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 
+	"github.com/neerajchowdary889/GoRoutinesManager/types"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -24,7 +24,11 @@ var (
 // StartMetricsServer starts an HTTP server to expose Prometheus metrics
 // addr is the address to listen on (e.g., ":9090" or "localhost:9090")
 // updateInterval is how often to collect metrics (0 = use default of 5 seconds)
-func StartMetricsServer(addr string, updateInterval time.Duration) error {
+//
+// NOTE: This function starts its own HTTP server. For library usage, it's recommended
+// to use GetMetricsHandler() instead and register it with your application's HTTP server.
+// This avoids port conflicts and gives you control over the server lifecycle.
+func StartMetricsServer(addr string) error {
 	serverLock.Lock()
 	defer serverLock.Unlock()
 
@@ -38,7 +42,7 @@ func StartMetricsServer(addr string, updateInterval time.Duration) error {
 	// Create and start the collector
 	collectorLock.Lock()
 	if defaultCollector == nil {
-		defaultCollector = NewCollector(updateInterval)
+		defaultCollector = NewCollector()
 		defaultCollector.Start()
 	}
 	collectorLock.Unlock()
@@ -88,6 +92,19 @@ func StartMetricsServer(addr string, updateInterval time.Duration) error {
 	return nil
 }
 
+// UpdateMetricsUpdateInterval updates the metrics collection interval dynamically
+// This implements the observer pattern - when UpdateInterval changes in types,
+// call this function to notify the collector
+// This should be called after updating types.UpdateInterval via SetMetrics
+func UpdateMetricsUpdateInterval() {
+	collectorLock.Lock()
+	defer collectorLock.Unlock()
+	if defaultCollector != nil && defaultCollector.running {
+		// Use the current value from types.UpdateInterval
+		defaultCollector.UpdateInterval(types.UpdateInterval)
+	}
+}
+
 // StopMetricsServer gracefully stops the metrics HTTP server
 func StopMetricsServer(ctx context.Context) error {
 	serverLock.Lock()
@@ -124,7 +141,7 @@ func GetMetricsHandler() http.Handler {
 // StartCollector starts the metrics collector without starting an HTTP server
 // This is useful when you want to integrate metrics into an existing HTTP server
 // updateInterval is how often to collect metrics (0 = use default of 5 seconds)
-func StartCollector(updateInterval time.Duration) {
+func StartCollector() {
 	collectorLock.Lock()
 	defer collectorLock.Unlock()
 
@@ -132,7 +149,7 @@ func StartCollector(updateInterval time.Duration) {
 	InitMetrics()
 
 	if defaultCollector == nil {
-		defaultCollector = NewCollector(updateInterval)
+		defaultCollector = NewCollector()
 		defaultCollector.Start()
 	}
 }

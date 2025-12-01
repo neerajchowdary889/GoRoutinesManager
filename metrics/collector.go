@@ -9,26 +9,26 @@ import (
 
 // Collector is responsible for collecting metrics from the goroutine manager
 type Collector struct {
-	// updateInterval is how often to update metrics
-	updateInterval time.Duration
-
 	// stopCh is used to signal the collector to stop
 	stopCh chan struct{}
 
+	// intervalCh is used to signal interval changes
+	intervalCh chan time.Duration
+
 	// running indicates if the collector is currently running
 	running bool
+
+	// currentInterval stores the current interval for comparison
+	currentInterval time.Duration
 }
 
 // NewCollector creates a new metrics collector
-func NewCollector(updateInterval time.Duration) *Collector {
-	if updateInterval == 0 {
-		updateInterval = 5 * time.Second // Default to 5 seconds
-	}
-
+func NewCollector() *Collector {
 	return &Collector{
-		updateInterval: updateInterval,
-		stopCh:         make(chan struct{}),
-		running:        false,
+		stopCh:          make(chan struct{}),
+		intervalCh:      make(chan time.Duration, 1), // Buffered to avoid blocking
+		running:         false,
+		currentInterval: types.UpdateInterval,
 	}
 }
 
@@ -52,9 +52,27 @@ func (c *Collector) Stop() {
 	c.running = false
 }
 
-// collectLoop runs the collection loop
+// UpdateInterval updates the collection interval dynamically
+// This implements the observer pattern for interval changes
+func (c *Collector) UpdateInterval(newInterval time.Duration) {
+	if !c.running {
+		return
+	}
+	// Non-blocking send (channel is buffered)
+	select {
+	case c.intervalCh <- newInterval:
+	default:
+		// Channel full, skip (will be picked up on next tick check)
+	}
+}
+
+// collectLoop runs the collection loop with dynamic interval support
+// It observes changes to types.UpdateInterval and updates the ticker accordingly
 func (c *Collector) collectLoop() {
-	ticker := time.NewTicker(c.updateInterval)
+	// Initialize with current interval
+	currentInterval := types.UpdateInterval
+	c.currentInterval = currentInterval
+	ticker := time.NewTicker(currentInterval)
 	defer ticker.Stop()
 
 	// Collect immediately on start
@@ -64,6 +82,23 @@ func (c *Collector) collectLoop() {
 		select {
 		case <-ticker.C:
 			c.Collect()
+			// Check if interval has changed (observer pattern)
+			// We check on each tick to avoid missing updates
+			if types.UpdateInterval != currentInterval {
+				// Interval changed, recreate ticker with new interval
+				ticker.Stop()
+				currentInterval = types.UpdateInterval
+				c.currentInterval = currentInterval
+				ticker = time.NewTicker(currentInterval)
+			}
+		case newInterval := <-c.intervalCh:
+			// Explicit interval update signal
+			if newInterval != currentInterval {
+				ticker.Stop()
+				currentInterval = newInterval
+				c.currentInterval = currentInterval
+				ticker = time.NewTicker(currentInterval)
+			}
 		case <-c.stopCh:
 			return
 		}

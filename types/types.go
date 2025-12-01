@@ -10,6 +10,8 @@ import (
 var (
 	// Default timeout is 10 seconds - can be changed using Metadata
 	ShutdownTimeout = 10 * time.Second
+	// Default update interval is 5 seconds - can be changed using Metadata
+	UpdateInterval = 5 * time.Second
 )
 
 // Singleton pattern to not repeat the same managers again
@@ -64,5 +66,6 @@ type Metadata struct{
 	MaxRoutines int
 	Metrics bool
 	MetricsURL string
+	UpdateInterval time.Duration
 	ShutdownTimeout time.Duration
 }

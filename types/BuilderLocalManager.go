@@ -77,12 +77,18 @@ func (LM *LocalManager) SetLocalMutex() *LocalManager {
 // >>> Set APIs
 // SetLocalName sets the name of the local manager
 func (LM *LocalManager) SetLocalName(localName string) *LocalManager {
+	// Lock and update
+	LM.LockAppWriteMutex()
+	defer LM.UnlockAppWriteMutex()
 	LM.LocalName = localName
 	return LM
 }
 
 // SetLocalContext sets the context for the local manager
 func (LM *LocalManager) SetLocalContext() *LocalManager {
+	// Lock and update
+	LM.LockAppWriteMutex()
+	defer LM.UnlockAppWriteMutex()
 	ctx := Context.GetAppContext(Prefix_LocalManager + LM.LocalName).Get()
 	Done := func() {
 		Context.GetAppContext(Prefix_LocalManager + LM.LocalName).Done(ctx)
@@ -94,25 +100,36 @@ func (LM *LocalManager) SetLocalContext() *LocalManager {
 
 // SetLocalWaitGroup sets the wait group for the local manager
 func (LM *LocalManager) SetLocalWaitGroup() *LocalManager {
+	// Lock and update
+	LM.LockAppWriteMutex()
+	defer LM.UnlockAppWriteMutex()
 	LM.Wg = &sync.WaitGroup{}
 	return LM
 }
 
 // SetParentContext sets the parent context for the local manager
 func (LM *LocalManager) SetParentContext(ctx context.Context) *LocalManager {
+	// Lock and update
+	LM.LockAppWriteMutex()
+	defer LM.UnlockAppWriteMutex()
+
 	LM.ParentCtx = ctx
 	return LM
 }
 
 // SpawnChild sets the child context for the local manager
 func (LM *LocalManager) SpawnChild() (context.Context, context.CancelFunc) {
+	// Lock and update
+	LM.LockAppWriteMutex()
+	defer LM.UnlockAppWriteMutex()
+	
 	ctx, cancel := Context.SpawnChild(LM.Ctx)
 	return ctx, cancel
 }
 
 // AddRoutine adds a new routine to the local manager
 func (LM *LocalManager) AddRoutine(routine *Routine) *LocalManager {
-	// Lock first
+	// Lock and update
 	LM.LockAppWriteMutex()
 	defer LM.UnlockAppWriteMutex()
 
