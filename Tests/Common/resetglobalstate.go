@@ -1,16 +1,35 @@
 package Common
 
 import (
-	"context"
+		"sync"
+	"time"
 
+	"github.com/neerajchowdary889/GoRoutinesManager/Context"
 	"github.com/neerajchowdary889/GoRoutinesManager/metrics"
 	"github.com/neerajchowdary889/GoRoutinesManager/types"
 )
 
-// resetGlobalState resets the global singleton for testing
+var (
+    once sync.Once
+    lock sync.RWMutex
+)
+
+
+// Tests/Common/resetglobalstate.go
 func ResetGlobalState() {
-	if metrics.IsServerRunning() {
-		metrics.StopMetricsServer(context.Background())
-	}
-	types.Global = nil
+    // Stop the metrics server properly
+    if metrics.IsServerRunning() {
+        ctx, cancel := Context.GetAppContext("Test:ResetGlobalState").NewChildContext()
+        defer cancel()
+        metrics.StopMetricsServer(ctx)
+    }
+    
+    // Wait longer for all goroutines to finish
+    time.Sleep(300 * time.Millisecond)
+    
+    // Acquire write lock before resetting
+    lock.Lock()
+    once = sync.Once{}
+    types.Global = nil
+    lock.Unlock()
 }

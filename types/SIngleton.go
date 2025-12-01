@@ -7,12 +7,13 @@ import (
 )
 
 var (
-	Once sync.Once
+	once sync.Once
+	lock sync.RWMutex
 )
 
 func SetGlobalManager(global *GlobalManager) {
 	// By using this once - we can avoid the race condition thus made thread safe
-	Once.Do(func() {
+	once.Do(func() {
 		Global = global
 	})
 }
@@ -37,6 +38,10 @@ func SetLocalManager(appName, localName string, local *LocalManager) {
 }
 
 func GetGlobalManager() (*GlobalManager, error) {
+	// Read Lock and Unlock after returning the global manager
+	lock.RLock()
+	defer lock.RUnlock()
+
 	if Global == nil {
 		return nil, Errors.ErrGlobalManagerNotFound
 	}

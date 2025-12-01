@@ -408,6 +408,7 @@ func (LM *LocalManagerStruct) spawnGoroutine(functionName string, workerFunc fun
 
 // GoroutineLister
 func (LM *LocalManagerStruct) GetAllGoroutines() ([]*types.Routine, error) {
+
 	localManager, err := types.GetLocalManager(LM.AppName, LM.LocalName)
 	if err != nil {
 		return nil, err

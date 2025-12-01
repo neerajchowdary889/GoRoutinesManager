@@ -69,40 +69,39 @@ func (c *Collector) UpdateInterval(newInterval time.Duration) {
 // collectLoop runs the collection loop with dynamic interval support
 // It observes changes to types.UpdateInterval and updates the ticker accordingly
 func (c *Collector) collectLoop() {
-	// Initialize with current interval
-	currentInterval := types.UpdateInterval
-	c.currentInterval = currentInterval
-	ticker := time.NewTicker(currentInterval)
-	defer ticker.Stop()
-
-	// Collect immediately on start
-	c.Collect()
-
-	for {
-		select {
-		case <-ticker.C:
-			c.Collect()
-			// Check if interval has changed (observer pattern)
-			// We check on each tick to avoid missing updates
-			if types.UpdateInterval != currentInterval {
-				// Interval changed, recreate ticker with new interval
-				ticker.Stop()
-				currentInterval = types.UpdateInterval
-				c.currentInterval = currentInterval
-				ticker = time.NewTicker(currentInterval)
-			}
-		case newInterval := <-c.intervalCh:
-			// Explicit interval update signal
-			if newInterval != currentInterval {
-				ticker.Stop()
-				currentInterval = newInterval
-				c.currentInterval = currentInterval
-				ticker = time.NewTicker(currentInterval)
-			}
-		case <-c.stopCh:
-			return
-		}
-	}
+    globalMgr, _ := types.GetGlobalManager()
+    metadata := globalMgr.GetMetadata()
+    
+    currentInterval := metadata.GetUpdateInterval()
+    c.currentInterval = currentInterval
+    ticker := time.NewTicker(currentInterval)
+    defer ticker.Stop()
+    
+    c.Collect()
+    
+    for {
+        select {
+        case <-ticker.C:
+            c.Collect()
+            
+            newInterval := metadata.GetUpdateInterval()
+            if newInterval != currentInterval {
+                ticker.Stop()
+                currentInterval = newInterval
+                c.currentInterval = currentInterval
+                ticker = time.NewTicker(currentInterval)
+            }
+        case newInterval := <-c.intervalCh:
+            if newInterval != currentInterval {
+                ticker.Stop()
+                currentInterval = newInterval
+                c.currentInterval = currentInterval
+                ticker = time.NewTicker(currentInterval)
+            }
+        case <-c.stopCh:
+            return
+        }
+    }
 }
 
 // Collect gathers all metrics from the goroutine manager
@@ -154,7 +153,10 @@ func (c *Collector) collectGlobalMetrics() {
 		GoroutinesTotal.Set(float64(goroutineCount))
 
 		// Get shutdown timeout
-		ShutdownTimeoutSeconds.Set(types.ShutdownTimeout.Seconds())
+		metadata := globalMgr.GetMetadata()
+		if metadata != nil {
+			ShutdownTimeoutSeconds.Set(metadata.GetShutdownTimeout().Seconds())
+		}
 	} else {
 		GlobalInitialized.Set(0)
 		AppManagersTotal.Set(0)
@@ -281,33 +283,33 @@ func (c *Collector) collectGoroutineMetrics() {
 
 // collectMetadataMetrics collects metrics from metadata
 func (c *Collector) collectMetadataMetrics() {
-	if !types.IsIntilized().Global() {
-		MetricsEnabled.Set(0)
-		MaxRoutines.Set(0)
-		return
-	}
-
-	globalMgr, err := types.GetGlobalManager()
-	if err != nil {
-		return
-	}
-
-	metadata := globalMgr.GetMetadata()
-	if metadata == nil {
-		MetricsEnabled.Set(0)
-		MaxRoutines.Set(0)
-		return
-	}
-
-	// Metrics enabled
-	if metadata.Metrics {
-		MetricsEnabled.Set(1)
-	} else {
-		MetricsEnabled.Set(0)
-	}
-
-	// Max routines
-	MaxRoutines.Set(float64(metadata.MaxRoutines))
+    if !types.IsIntilized().Global() {
+        MetricsEnabled.Set(0)
+        MaxRoutines.Set(0)
+        return
+    }
+    
+    globalMgr, err := types.GetGlobalManager()
+    if err != nil {
+        return
+    }
+    
+    metadata := globalMgr.GetMetadata()
+    if metadata == nil {
+        MetricsEnabled.Set(0)
+        MaxRoutines.Set(0)
+        return
+    }
+    
+    // ✅ FIX: Use getter method
+    if metadata.GetMetrics() {
+        MetricsEnabled.Set(1)
+    } else {
+        MetricsEnabled.Set(0)
+    }
+    
+    // ✅ FIX: Use getter method
+    MaxRoutines.Set(float64(metadata.GetMaxRoutines()))
 }
 
 // collectSystemMetrics collects system-level metrics

@@ -6,7 +6,10 @@ func IsIntilized() Initializer {
 	return Initializer{}
 }
 
+// This is a edge case and know race condition
 func (Is Initializer) Global() bool {
+	lock.RLock()
+	defer lock.RUnlock()
 	return Global != nil
 }
 
@@ -31,12 +34,12 @@ func (Is Initializer) Local(appName, localName string) bool {
 
 	// Global RLock and RUnlock
 	Global.LockGlobalReadMutex()
-	appMgr, ok := Global.AppManagers[appName]	
+	appMgr, ok := Global.AppManagers[appName]
 	Global.UnlockGlobalReadMutex()
 	if !ok {
 		return false
 	}
-	
+
 	// App RLock and RUnlock
 	appMgr.LockAppReadMutex()
 	_, ok = appMgr.LocalManagers[localName]
@@ -49,15 +52,15 @@ func (Is Initializer) Routine(appName, localName, routineID string) bool {
 	if Global == nil || !Is.App(appName) {
 		return false
 	}
-	
+
 	// Global RLock and RUnlock
 	Global.LockGlobalReadMutex()
-	appMgr, ok := Global.AppManagers[appName]	
+	appMgr, ok := Global.AppManagers[appName]
 	Global.UnlockGlobalReadMutex()
 	if !ok {
 		return false
 	}
-	
+
 	// App RLock and RUnlock
 	appMgr.LockAppReadMutex()
 	localMgr, ok := appMgr.LocalManagers[localName]
@@ -65,7 +68,7 @@ func (Is Initializer) Routine(appName, localName, routineID string) bool {
 	if !ok {
 		return false
 	}
-	
+
 	// Local RLock and RUnlock
 	localMgr.LockLocalReadMutex()
 	_, ok = localMgr.Routines[routineID]

@@ -66,6 +66,7 @@ type Routine struct {
 }
 
 type Metadata struct {
+	mu *sync.RWMutex
 	MaxRoutines     int
 	Metrics         bool
 	MetricsURL      string

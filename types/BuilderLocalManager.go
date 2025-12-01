@@ -198,11 +198,15 @@ func (LM *LocalManager) GetRoutine(routineID string) (*Routine, error) {
 
 // GetRoutines gets all the routines for the local manager
 func (LM *LocalManager) GetRoutines() map[string]*Routine {
-	LM.LockLocalReadMutex()
-	defer LM.UnlockLocalReadMutex()
-	return LM.Routines
+    LM.LockLocalReadMutex()
+    defer LM.UnlockLocalReadMutex()
+    
+	routinesCopy := make(map[string]*Routine, len(LM.Routines))
+	for k, v := range LM.Routines {
+		routinesCopy[k] = v
+	}
+	return routinesCopy
 }
-
 // GetLocalContext gets the context for the local manager
 func (LM *LocalManager) GetLocalContext() (context.Context, context.CancelFunc) {
 	return LM.Ctx, LM.Cancel
