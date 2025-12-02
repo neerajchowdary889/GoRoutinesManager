@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 10s      # Scrape metrics every 10 seconds
+  evaluation_interval: 10s   # Evaluate rules every 10 seconds
+  external_labels:
+    cluster: 'goroutines-manager-example'
+    environment: 'example'
+
+# Scrape configuration for the GoRoutinesManager example application
+scrape_configs:
+  - job_name: 'goroutines-manager-example'
+    scrape_interval: 10s     # Scrape every 10 seconds
+    scrape_timeout: 5s       # Timeout after 5 seconds
+    static_configs:
+      # For Docker: use host.docker.internal to access host machine
+      # For local: use localhost
+      - targets: ['host.docker.internal:19090']  # Example metrics server port
+        labels:
+          app: 'goroutines-manager'
+          example: 'example-metrics'
+
