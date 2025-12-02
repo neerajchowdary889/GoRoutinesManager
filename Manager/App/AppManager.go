@@ -11,17 +11,17 @@ import (
 	"github.com/neerajchowdary889/GoRoutinesManager/Manager/Errors"
 )
 
-type AppManager struct {
+type AppManagerStruct struct {
 	AppName string
 }
 
 func NewAppManager(Appname string) Interface.AppGoroutineManagerInterface {
-	return &AppManager{
+	return &AppManagerStruct{
 		AppName: Appname,
 	}
 }
 
-func (AM *AppManager) CreateApp() (*types.AppManager, error) {
+func (AM *AppManagerStruct) CreateApp() (*types.AppManager, error) {
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
@@ -50,7 +50,7 @@ func (AM *AppManager) CreateApp() (*types.AppManager, error) {
 	return app, nil
 }
 
-func (AM *AppManager) Shutdown(safe bool) error {
+func (AM *AppManagerStruct) Shutdown(safe bool) error {
 	startTime := time.Now()
 	shutdownType := "unsafe"
 	if safe {
@@ -122,7 +122,7 @@ func (AM *AppManager) Shutdown(safe bool) error {
 	return nil
 }
 
-func (AM *AppManager) CreateLocal(localName string) (*types.LocalManager, error) {
+func (AM *AppManagerStruct) CreateLocal(localName string) (*types.LocalManager, error) {
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
@@ -147,7 +147,7 @@ func (AM *AppManager) CreateLocal(localName string) (*types.LocalManager, error)
 	return Manager, nil
 }
 
-func (AM *AppManager) GetAllLocalManagers() ([]*types.LocalManager, error) {
+func (AM *AppManagerStruct) GetAllLocalManagers() ([]*types.LocalManager, error) {
 	appManager, err := types.GetAppManager(AM.AppName)
 	if err != nil {
 		return nil, err
@@ -155,7 +155,7 @@ func (AM *AppManager) GetAllLocalManagers() ([]*types.LocalManager, error) {
 	return LocalHelper.NewLocalHelper().MapToSlice(appManager.GetLocalManagers()), nil
 }
 
-func (AM *AppManager) GetLocalManager(localName string) (*types.LocalManager, error) {
+func (AM *AppManagerStruct) GetLocalManager(localName string) (*types.LocalManager, error) {
 	appManager, err := types.GetAppManager(AM.AppName)
 	if err != nil {
 		return nil, err
@@ -163,7 +163,7 @@ func (AM *AppManager) GetLocalManager(localName string) (*types.LocalManager, er
 	return appManager.GetLocalManager(localName)
 }
 
-func (AM *AppManager) GetAllGoroutines() ([]*types.Routine, error) {
+func (AM *AppManagerStruct) GetAllGoroutines() ([]*types.Routine, error) {
 	// Return the All Goroutines for the particular app manager
 	// Dont use this unless you need to get all the goroutines for the particular app manager. This would take significant memory.
 	appManager, err := types.GetAppManager(AM.AppName)
@@ -179,7 +179,7 @@ func (AM *AppManager) GetAllGoroutines() ([]*types.Routine, error) {
 	return allGoroutines, nil
 }
 
-func (AM *AppManager) GetGoroutineCount() int {
+func (AM *AppManagerStruct) GetGoroutineCount() int {
 	// Dont Use GetAllGoroutines() as it will create a new slice - memory usage would be O(n)
 	// and it will be a performance issue
 	// Return the Go Routine count for the particular app manager
@@ -195,7 +195,7 @@ func (AM *AppManager) GetGoroutineCount() int {
 	return count
 }
 
-func (AM *AppManager) GetLocalManagerCount() int {
+func (AM *AppManagerStruct) GetLocalManagerCount() int {
 	// Return the Local Manager count for the particular app manager
 	appManager, err := types.GetAppManager(AM.AppName)
 	if err != nil {
@@ -204,7 +204,7 @@ func (AM *AppManager) GetLocalManagerCount() int {
 	return appManager.GetLocalManagerCount()
 }
 
-func (AM *AppManager) GetLocalManagerByName(localName string) (*types.LocalManager, error) {
+func (AM *AppManagerStruct) GetLocalManagerByName(localName string) (*types.LocalManager, error) {
 	appManager, err := types.GetAppManager(AM.AppName)
 	if err != nil {
 		return nil, err
