@@ -14,8 +14,8 @@ import (
 type GoroutineOption interface{}
 
 // Initializer initializes the manager
-type Initializer interface {
-	Init() error
+type GlobalInitializer interface {
+	Init() (*types.GlobalManager, error)
 }
 
 // Shutdowner handles shutdown of the manager
@@ -106,7 +106,7 @@ type RoutineManager interface {
 
 // GlobalGoroutineManagerInterface defines the complete interface for global manager
 type GlobalGoroutineManagerInterface interface {
-	Initializer
+	GlobalInitializer
 	Shutdowner
 
 	MetadataManager
