@@ -17,7 +17,7 @@ func NewGlobalManager() Interface.GlobalGoroutineManagerInterface {
 	return &GlobalManagerStruct{}
 }
 
-func (GM *GlobalManagerStruct) Init() error {
+func (GM *GlobalManagerStruct) Init() (*types.GlobalManager, error) {
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
@@ -25,7 +25,7 @@ func (GM *GlobalManagerStruct) Init() error {
 	}()
 
 	if types.IsIntilized().Global() {
-		return nil
+		return types.GetGlobalManager()
 	}
 
 	Global := types.NewGlobalManager().SetGlobalMutex().SetGlobalWaitGroup().SetGlobalContext()
@@ -34,7 +34,7 @@ func (GM *GlobalManagerStruct) Init() error {
 	// Record operation
 	metrics.RecordManagerOperation("global", "init", "")
 
-	return nil
+	return types.GetGlobalManager()
 }
 
 func (GM *GlobalManagerStruct) Shutdown(safe bool) error {
